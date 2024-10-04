@@ -5,6 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Storytelling App</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+    font-family: 'Arial', sans-serif;
+    background-color: #e3f2fd; /* Soft blue background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    width: 400px;
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 20px;
+    color: #3f51b5; /* Main theme color */
+}
+
+#story-display {
+    height: 150px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+}
+
+#story-input {
+    width: 100%;
+    height: 80px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+button {
+    width: 30%;
+    padding: 10px;
+    margin: 5px;
+    background-color: #3f51b5;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #303f9f; /* Darker shade on hover */
+}
+
+#question-area, #feedback-area {
+    margin-top: 20px;
+    font-weight: bold;
+}
+    </style>
 </head>
 <body>
     <div class="container">
@@ -19,6 +81,89 @@
         <div id="question-area"></div>
         <div id="feedback-area"></div> <!-- For feedback -->
     </div>
-    <script src="script.js"></script>
+    <script>
+        // Get elements from the DOM
+const storyContent = document.getElementById('story-content');
+const storyInput = document.getElementById('story-input');
+const questionArea = document.getElementById('question-area');
+const feedbackArea = document.getElementById('feedback-area');
+const submitBtn = document.getElementById('submit-btn');
+const readBtn = document.getElementById('read-btn');
+const voiceAnswerBtn = document.getElementById('voice-answer-btn');
+
+// Questions related to the story
+const questions = [
+    "What do you think happens next?",
+    "Can you describe the main character?",
+    "Why do you think the character made that decision?",
+    "How would you change the ending?"
+];
+
+// Function to add text to the story
+submitBtn.addEventListener('click', () => {
+    const newStoryPart = storyInput.value.trim();
+    if (newStoryPart) {
+        storyContent.textContent += " " + newStoryPart;
+        storyInput.value = ''; // Clear the input field
+    }
+});
+
+// Function to read the story aloud
+readBtn.addEventListener('click', () => {
+    const speech = new SpeechSynthesisUtterance(storyContent.textContent);
+    speechSynthesis.speak(speech);
+
+    // After the story is read aloud, ask a question
+    speech.onend = () => {
+        askQuestion();
+    };
+});
+
+// Function to ask a random question
+function askQuestion() {
+    const randomIndex = Math.floor(Math.random() * questions.length);
+    const randomQuestion = questions[randomIndex];
+    questionArea.textContent = randomQuestion;
+    feedbackArea.textContent = ''; // Clear previous feedback
+    startVoiceRecognition(); // Start voice recognition after asking a question
+}
+
+// Function to start voice recognition
+function startVoiceRecognition() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-US'; // Set language to English
+    recognition.interimResults = false; // We want only final results
+    recognition.maxAlternatives = 1; // Get only one best result
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript; // Get the spoken answer
+        questionArea.textContent += ` (You said: "${transcript}")`; // Show the spoken answer
+        provideFeedback(transcript); // Provide feedback based on the answer
+    };
+
+    recognition.onerror = (event) => {
+        questionArea.textContent = 'Error occurred in recognition: ' + event.error; // Handle errors
+    };
+
+    recognition.onend = () => {
+        questionArea.textContent += " (Recognition ended.)";
+    };
+
+    // Start listening for the user's voice
+    recognition.start();
+}
+
+// Function to provide feedback based on the answer
+function provideFeedback(answer) {
+    // Simple feedback based on keywords
+    if (answer.includes("happy")) {
+        feedbackArea.textContent = "That's a positive outlook! Keep it up!";
+    } else if (answer.includes("sad")) {
+        feedbackArea.textContent = "It seems there might be some conflict. Let's explore that!";
+    } else {
+        feedbackArea.textContent = "Great thoughts! Keep sharing your ideas!";
+    }
+        }
+    </script>
 </body>
 </html>
